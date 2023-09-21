@@ -1,22 +1,59 @@
-# 声明要求的 cmake 最低版本
-cmake_minimum_required(VERSION 2.8)
+# ---------------------------------------------------------------------------------------------
+# Specifies the minimum required version of CMake and project name
 
-# 声明一个 cmake 工程
+cmake_minimum_required(VERSION 3.10)
 project(HelloSLAM)
 
-# 设置编译模式
-set(CMAKE_BUILD_TYPE "Debug")
+# ---------------------------------------------------------------------------------------------
+# Sets the C++ standard to C++17 and makes it a requirement
 
-# 添加一个可执行程序
-# 语法：add_executable( 程序名 源代码文件 ）
-add_executable(helloSLAM helloSLAM.cpp)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# 添加hello库
-add_library(hello libHelloSLAM.cpp)
-# 共享库
-add_library(hello_shared SHARED libHelloSLAM.cpp)
+# ---------------------------------------------------------------------------------------------
+# Sets the source and include directories relative to the project root
 
-# 添加可执行程序调用hello库中函数
-add_executable(useHello useHello.cpp)
-# 将库文件链接到可执行程序上
-target_link_libraries(useHello hello_shared)
+set(SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
+set(INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
+
+# ---------------------------------------------------------------------------------------------
+# Adding Executables
+
+# Adds executable 'helloSLAM'
+add_executable(helloSLAM "${SOURCE_DIR}/helloSLAM.cpp")
+target_include_directories(helloSLAM PUBLIC "${INCLUDE_DIR}")
+
+# Adds executable 'useHello'
+add_executable(useHello "${SOURCE_DIR}/useHello.cpp")
+target_include_directories(useHello PUBLIC "${INCLUDE_DIR}")
+
+# ---------------------------------------------------------------------------------------------
+# Adding Libraries and Specifying include directories
+
+# Adds static library 'Hello'
+add_library(Hello "${SOURCE_DIR}/libHelloSLAM.cpp")
+target_include_directories(Hello PUBLIC "${INCLUDE_DIR}")
+
+# Adds shared library 'HelloSharedLib'
+add_library(HelloSharedLib SHARED "${SOURCE_DIR}/libHelloSLAM.cpp")
+target_include_directories(HelloSharedLib PUBLIC "${INCLUDE_DIR}")
+
+# ---------------------------------------------------------------------------------------------
+# Specifying Instructions for Installation on local machine for use by other projects in any directory
+
+# Specifies that 'libHelloSLAM.h' is the public header for 'HelloSharedLib'
+set_target_properties(HelloSharedLib PROPERTIES PUBLIC_HEADER "${INCLUDE_DIR}/libHelloSLAM.h")
+
+# Sets installation rules for 'HelloSharedLib'
+install(TARGETS HelloSharedLib
+    LIBRARY DESTINATION lib
+    PUBLIC_HEADER DESTINATION include
+)
+
+# ---------------------------------------------------------------------------------------------
+# Linking Libraries with Executables
+
+# Links 'useHello' executable with 'HelloSharedLib'
+target_link_libraries(useHello HelloSharedLib)
+
+# ---------------------------------------------------------------------------------------------
