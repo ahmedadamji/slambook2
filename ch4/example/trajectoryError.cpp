@@ -7,22 +7,28 @@
 using namespace Sophus;
 using namespace std;
 
+// Path to the ground truth trajectory file
 string groundtruth_file = "./example/groundtruth.txt";
+// Path to the estimated trajectory file
 string estimated_file = "./example/estimated.txt";
 
+// Typedef for a vector of SE3 objects, with memory alignment for Eigen
 typedef vector<Sophus::SE3d, Eigen::aligned_allocator<Sophus::SE3d>> TrajectoryType;
 
+// Function declarations for drawing and reading trajectories
 void DrawTrajectory(const TrajectoryType &gt, const TrajectoryType &esti);
-
 TrajectoryType ReadTrajectory(const string &path);
 
 int main(int argc, char **argv) {
+  // Reading ground truth and estimated trajectories from files
   TrajectoryType groundtruth = ReadTrajectory(groundtruth_file);
   TrajectoryType estimated = ReadTrajectory(estimated_file);
+  
+  // Ensure trajectories are not empty and have the same size
   assert(!groundtruth.empty() && !estimated.empty());
   assert(groundtruth.size() == estimated.size());
 
-  // compute rmse
+  // Compute RMSE (Root Mean Square Error) between ground truth and estimated trajectories
   double rmse = 0;
   for (size_t i = 0; i < estimated.size(); i++) {
     Sophus::SE3d p1 = estimated[i], p2 = groundtruth[i];
@@ -33,6 +39,7 @@ int main(int argc, char **argv) {
   rmse = sqrt(rmse);
   cout << "RMSE = " << rmse << endl;
 
+  // Draw the trajectories using Pangolin
   DrawTrajectory(groundtruth, estimated);
   return 0;
 }
@@ -40,11 +47,14 @@ int main(int argc, char **argv) {
 TrajectoryType ReadTrajectory(const string &path) {
   ifstream fin(path);
   TrajectoryType trajectory;
+  
+  // Check if file opened successfully
   if (!fin) {
     cerr << "trajectory " << path << " not found." << endl;
     return trajectory;
   }
 
+  // Read SE3 transformations from file and store in trajectory
   while (!fin.eof()) {
     double time, tx, ty, tz, qx, qy, qz, qw;
     fin >> time >> tx >> ty >> tz >> qx >> qy >> qz >> qw;
@@ -55,7 +65,7 @@ TrajectoryType ReadTrajectory(const string &path) {
 }
 
 void DrawTrajectory(const TrajectoryType &gt, const TrajectoryType &esti) {
-  // create pangolin window and plot the trajectory
+  // Create Pangolin window and set up the rendering state
   pangolin::CreateWindowAndBind("Trajectory Viewer", 1024, 768);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
@@ -70,7 +80,7 @@ void DrawTrajectory(const TrajectoryType &gt, const TrajectoryType &esti) {
       .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
       .SetHandler(new pangolin::Handler3D(s_cam));
 
-
+  // Main rendering loop
   while (pangolin::ShouldQuit() == false) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -78,6 +88,7 @@ void DrawTrajectory(const TrajectoryType &gt, const TrajectoryType &esti) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
     glLineWidth(2);
+    // Draw ground truth trajectory in blue
     for (size_t i = 0; i < gt.size() - 1; i++) {
       glColor3f(0.0f, 0.0f, 1.0f);  // blue for ground truth
       glBegin(GL_LINES);
@@ -87,6 +98,7 @@ void DrawTrajectory(const TrajectoryType &gt, const TrajectoryType &esti) {
       glEnd();
     }
 
+    // Draw estimated trajectory in red
     for (size_t i = 0; i < esti.size() - 1; i++) {
       glColor3f(1.0f, 0.0f, 0.0f);  // red for estimated
       glBegin(GL_LINES);
@@ -96,7 +108,6 @@ void DrawTrajectory(const TrajectoryType &gt, const TrajectoryType &esti) {
       glEnd();
     }
     pangolin::FinishFrame();
-    usleep(5000);   // sleep 5 ms
+    usleep(5000);   // sleep 5 ms to reduce CPU usage
   }
-
 }

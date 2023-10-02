@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(useSophus)
 
-# 为使用 sophus，需要使用find_package命令找到它
+# Searches for the Sophus library in the system. The REQUIRED flag indicates that this is a mandatory dependency.
+# As it is a required dependency, if Sophus is not found, CMake will stop processing the project and report an error.
+# If it is not a required dependency, CMake will print a warning and continue processing.
 find_package(Sophus REQUIRED)
 
 # Eigen
